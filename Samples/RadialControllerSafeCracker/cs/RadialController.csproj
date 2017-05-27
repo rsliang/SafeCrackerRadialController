@@ -102,14 +102,6 @@
     <Compile Include="..\..\..\SharedContent\cs\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="SampleConfiguration.cs" />
-    <Compile Include="Scenario1_EventAndMenuHookup.xaml.cs">
-      <DependentUpon>Scenario1_EventAndMenuHookup.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Scenario2_SystemDefaultMenu.xaml.cs">
-      <DependentUpon>Scenario2_SystemDefaultMenu.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Scenario3_SafeCrackerHookup.xaml.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -127,22 +119,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="..\shared\Scenario1_EventAndMenuHookup.xaml">
-      <Link>Scenario1_EventAndMenuHookup.xaml</Link>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="..\..\..\SharedContent\xaml\Styles.xaml">
       <Link>Styles\Styles.xaml</Link>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="..\shared\Scenario2_SystemDefaultMenu.xaml">
-      <Link>Scenario2_SystemDefaultMenu.xaml</Link>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Scenario3_SafeCrackerHookup.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -175,32 +153,7 @@
     <Content Include="..\shared\Item0.png">
       <Link>Assets\Item0.png</Link>
     </Content>
-    <Content Include="..\shared\Item1.png">
-      <Link>Assets\Item1.png</Link>
-    </Content>
-    <Content Include="..\shared\Item2.png">
-      <Link>Assets\Item2.png</Link>
-    </Content>
-    <Content Include="..\shared\Item3.png">
-      <Link>Assets\Item3.png</Link>
-    </Content>
-    <Content Include="..\shared\Item4.png">
-      <Link>Assets\Item4.png</Link>
-    </Content>
-    <Content Include="..\shared\Item5.png">
-      <Link>Assets\Item5.png</Link>
-    </Content>
     <Content Include="Assets\combo.png" />
-    <Content Include="Assets\Num0.png" />
-    <Content Include="Assets\Num1.png" />
-    <Content Include="Assets\Num2.png" />
-    <Content Include="Assets\Num3.png" />
-    <Content Include="Assets\Num4.png" />
-    <Content Include="Assets\Num5.png" />
-    <Content Include="Assets\Num6.png" />
-    <Content Include="Assets\Num7.png" />
-    <Content Include="Assets\Num8.png" />
-    <Content Include="Assets\Num9.png" />
     <Content Include="Assets\Safe1.png" />
     <Content Include="Assets\Safe2.png" />
   </ItemGroup>
