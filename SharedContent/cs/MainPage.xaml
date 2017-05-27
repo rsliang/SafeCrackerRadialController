@@ -1,0 +1,182 @@
+﻿<!--
+//*********************************************************
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the MIT License (MIT).
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//*********************************************************
+-->
+<Page
+    x:Class="SDKTemplate.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SDKTemplate"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Main"
+    mc:Ignorable="d" Width="885">
+
+    <Page.Resources>
+        <Style x:Key="PaddedPanel" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Vertical" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="5,0,0,5" />
+        </Style>
+
+        <Style x:Key="ButtonGroup" BasedOn="{StaticResource PaddedPanel}" TargetType="StackPanel">
+            <Setter Property="BorderBrush" Value="WhiteSmoke" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+
+        <Storyboard x:Key="spincombo">
+            <DoubleAnimation 
+                             Storyboard.TargetName="spinme"
+                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" />
+        </Storyboard>
+
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid x:Name="RootGrid" Margin="12,10,12,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Margin="0,0,0,10">
+
+                <TextBlock Text="Instruction:" Style="{StaticResource SampleHeaderTextStyle}"/>
+                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
+                    Turn Dial and stop on sequence of 3 pre-set safe combo numbers.
+                </TextBlock>
+                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
+                    Tip: You will feel a haptic feedback when Dial rotates over the next safe combo sequence.
+                </TextBlock>
+            </StackPanel>
+            
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <StackPanel x:Name="Safe" Style="{StaticResource ButtonGroup}" Height="512" Width="512">
+                    <StackPanel.Background>
+                        <ImageBrush ImageSource="Assets\Item0.png" Stretch="Fill" />
+                    </StackPanel.Background>
+
+                    <Image Stretch="Uniform" x:Name="spinme" Source="Assets/combo.png" RenderTransformOrigin="0.5,0.5"
+                                  PointerPressed="spinme_PointerPressed" Height="225" Width="225" Margin="50,100,122,0">
+                        <Image.RenderTransform>
+                            <RotateTransform/>
+                        </Image.RenderTransform>
+                    </Image>
+                    <ToggleSwitch x:Name="Toggle0" Toggled="Toggle0_Toggled" OnContent="Unlocked" OffContent="Locked" FontWeight="ExtraBold" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Style="{StaticResource PaddedPanel}">
+                    <TextBlock FontSize="20">Log</TextBlock>
+                    <ScrollViewer x:Name="logViewer" Grid.Column="1" MaxHeight="300" Padding="0,0,20,0">
+                        <TextBlock x:Name="log" SizeChanged="OnLogSizeChanged"/>
+                    </ScrollViewer>
+                </StackPanel>
+                
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
+
+<!--   
+    <Page.Resources>
+        <Style x:Key="PaddedPanel" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Vertical" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="5,0,0,5" />
+        </Style>
+
+        <Style x:Key="ButtonGroup" BasedOn="{StaticResource PaddedPanel}" TargetType="StackPanel">
+            <Setter Property="BorderBrush" Value="WhiteSmoke" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+
+        <Storyboard x:Key="spincombo">
+            <DoubleAnimation 
+                             Storyboard.TargetName="spinme"
+                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" />
+        </Storyboard>
+
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+        <Grid x:Name="RootGrid" Margin="12,10,12,12">
+
+            <Grid.RowDefinitions>
+                
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                
+            </Grid.RowDefinitions>
+            
+            <StackPanel Margin="0,0,0,10">
+                
+                <TextBlock Text="Instruction:" Style="{StaticResource SampleHeaderTextStyle}"/>
+                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
+                    Rotate the Dial wheel by units of 10 and stop at each of the 3 pre-set safe combination numbers.                     
+                </TextBlock>
+                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
+                    Tip: You will feel a haptic feedback when the wheel is rotated over the next safe combo.
+                </TextBlock>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1">
+                
+                <StackPanel Orientation="Vertical">
+                
+                    <GridView IsItemClickEnabled="False" SelectionMode="None" SelectionChanged="GridView_SelectionChanged">
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
+                            </ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+
+                        <StackPanel x:Name="Safe" Style="{StaticResource ButtonGroup}" Height="512" Width="512">
+                    <StackPanel.Background>
+                        <ImageBrush ImageSource="Assets\Item0.png" Stretch="Fill" />
+                    </StackPanel.Background>
+
+                    <Image Stretch="Uniform" x:Name="spinme" Source="Assets/combo.png" RenderTransformOrigin="0.5,0.5"
+                                  PointerPressed="spinme_PointerPressed" Height="225" Width="225" Margin="50,100,122,0">
+                                <Image.RenderTransform>
+                                    <RotateTransform/>
+                                </Image.RenderTransform>
+                            </Image>
+                            <ToggleSwitch x:Name="Toggle0" Toggled="Toggle0_Toggled" OnContent="Unlocked" OffContent="Locked" FontWeight="ExtraBold" HorizontalAlignment="Center" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+
+                    </GridView>
+
+                    <StackPanel Grid.Column="2" Style="{StaticResource PaddedPanel}">
+                        <TextBlock FontSize="20">Log</TextBlock>
+                        <ScrollViewer x:Name="logViewer" Grid.Column="0" MaxHeight="300" Padding="0,0,20,0">
+                            <TextBlock x:Name="log" SizeChanged="OnLogSizeChanged"/>
+                        </ScrollViewer>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>
+-->
