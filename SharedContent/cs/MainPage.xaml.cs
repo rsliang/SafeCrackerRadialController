@@ -32,6 +32,7 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.Devices.Haptics;
+using System.Diagnostics;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -42,32 +43,31 @@ namespace SDKTemplate
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public static MainPage Current;
+		#region Constants
+		private const double DEGREES_PER_COMBO = 18;	// Every 18 degrees is a possible combo (total of 20 possible combinations)
+		private const int COMBOS_MULTIPLIER = 5;		// Multiply each combo by 5 to get possible combintions between 0 and 100
+		#endregion // Constants
 
-        private MainPage rootPage;
-        private RadialController Controller;
+		#region Public Fields
+		public static MainPage Current;
+		#endregion // Public Fields
 
-        private int activeItemIndex;
-        private List<RadialControllerMenuItem> menuItems;
-        //private List<Slider> sliders;
-        private List<ToggleSwitch> toggles;
+		#region Member Variables
+		private int activeItemIndex;
+		private RadialControllerConfiguration config;
+		private RadialController controller;
+		private double curRotationAngle;
+		private int curComboIndex;
+		private int lastCombo = -1;
+		private RadialControllerMenuItem menuItem; // SafeCracker custom tool menu
+		private List<RadialControllerMenuItem> menuItems;
+		private MainPage rootPage;
+		private List<int> safeCombo;
+		private List<int> selectedNumber;
+		private List<ToggleSwitch> toggles;
+		#endregion // Member Variables
 
-        private List<int> safeCombo;
-        private int curSafeComboIdx;
-        private List<int> selectedNumber;
-
-        //private Storyboard rotation = new Storyboard();
-        private double curComboDialIdx;
-        private double prevComboDialIdx;
-        private double tempComboDialIdx;
-        private double curSafeCombo;
-
-        RadialControllerConfiguration config;
-
-        // SafeCracker custom tool menu
-        RadialControllerMenuItem default0;
-
-        public MainPage()
+		public MainPage()
         {
             this.InitializeComponent();
             InitializeApp();
@@ -90,7 +90,7 @@ namespace SDKTemplate
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (Controller != null)
+            if (controller != null)
             {
                 log.Text += "\n" + " OnNavigateFrom ";
                 //Controller.Menu.Items.Clear();
@@ -103,44 +103,40 @@ namespace SDKTemplate
             safeCombo = new List<int> { 30, 60, 90 };
 
             // Initialize combination index
-            curSafeComboIdx = 0;
-
-            // Initialize Combo Dial position
-            curComboDialIdx = 0;
-            prevComboDialIdx = 0;
+            curComboIndex = 0;
 
             // Initialize combo numbers found
             selectedNumber = new List<int> { };
 
             // Create menu items to select which safe to crack open 
-            default0 = RadialControllerMenuItem.CreateFromIcon("Safe 1", RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/Safe1.png")));
+            menuItem = RadialControllerMenuItem.CreateFromIcon("Safe 1", RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/Safe1.png")));
         }
 
         private void InitializeController()
         {
             // Create instance of controller for SafeCracker
-            Controller = RadialController.CreateForCurrentView();
-            Controller.UseAutomaticHapticFeedback = false;
-            Controller.RotationResolutionInDegrees = 10;
+            controller = RadialController.CreateForCurrentView();
+            controller.UseAutomaticHapticFeedback = false;
+            controller.RotationResolutionInDegrees = 0.5;
 
             // Wire events
-            Controller.RotationChanged += Controller_RotationChanged;
-            Controller.ButtonClicked += Controller_ButtonClicked;
-            Controller.ScreenContactStarted += Controller_ScreenContactStarted;
-            Controller.ScreenContactContinued += Controller_ScreenContactContinued;
-            Controller.ScreenContactEnded += Controller_ScreenContactEnded;
-            Controller.ControlAcquired += Controller_ControlAcquired;
-            Controller.ControlLost += Controller_ControlLost;
+            controller.RotationChanged += Controller_RotationChanged;
+            controller.ButtonClicked += Controller_ButtonClicked;
+            controller.ScreenContactStarted += Controller_ScreenContactStarted;
+            controller.ScreenContactContinued += Controller_ScreenContactContinued;
+            controller.ScreenContactEnded += Controller_ScreenContactEnded;
+            controller.ControlAcquired += Controller_ControlAcquired;
+            controller.ControlLost += Controller_ControlLost;
         }
 
         private void CreateMenuItems()
         {
             menuItems = new List<RadialControllerMenuItem>
             {
-                default0,
+                menuItem,
             };
              
-            toggles = new List<ToggleSwitch> { Toggle0 };  
+            toggles = new List<ToggleSwitch> { UnlockedToggle };  
 
             for (int i = 0; i < menuItems.Count; ++i)
             {
@@ -160,9 +156,9 @@ namespace SDKTemplate
         {
             RadialControllerMenuItem radialControllerMenuItem = GetRadialControllerMenuItemFromSender(sender);
 
-            if (!Controller.Menu.Items.Contains(radialControllerMenuItem))
+            if (!controller.Menu.Items.Contains(radialControllerMenuItem))
             {
-                Controller.Menu.Items.Add(radialControllerMenuItem);
+                controller.Menu.Items.Add(radialControllerMenuItem);
             }
         }
 
@@ -181,20 +177,20 @@ namespace SDKTemplate
             //config.SetDefaultMenuItems(new[] { RadialControllerSystemMenuItemKind.Volume });
 
             // Add custom tool menu items if not exist
-            if (!Controller.Menu.Items.Contains(default0))
+            if (!controller.Menu.Items.Contains(menuItem))
             {
-                Controller.Menu.Items.Add(default0);
+                controller.Menu.Items.Add(menuItem);
             }
 
             // Remove all system default tool menu items
             config.SetDefaultMenuItems(new RadialControllerSystemMenuItemKind[] { });
 
             //Create a handler for when custom tool menu item is selected
-            default0.Invoked += default0_Invoked;
+            menuItem.Invoked += MenuItem_Invoked;
         }
 
         // Handling RadialController Input for System Default Menu items
-        private void default0_Invoked(RadialControllerMenuItem sender, object args)
+        private void MenuItem_Invoked(RadialControllerMenuItem sender, object args)
         {
             //PrintSelectedItem();
             //log.Text += "\n Selected : " + GetSelectedMenuItemName() + " default0";
@@ -212,11 +208,10 @@ namespace SDKTemplate
             //log.Text += "\nControl Acquired";
             //LogContactInfo(args.Contact);     
         }
-        private bool IsSafeCombo(double num)
+        private bool IsSafeCombo(int num)
         {
             // Check if number is the currnt safe combination we are looking for
-            int item = (int)num;
-            if (item == safeCombo[curSafeComboIdx] && curSafeComboIdx<=safeCombo.Count())
+            if (num == safeCombo[curComboIndex] && curComboIndex <= safeCombo.Count())
             {
                 return true;
             }
@@ -226,26 +221,22 @@ namespace SDKTemplate
             }
         }
 
-        private bool CheckSafeCombo(double combo)
+        private bool CheckSafeCombo(int num)
         {
-            // Save selected number for Safe Cracker
-            //RadialControllerMenuItem selectedMenuItem = Controller.Menu.GetSelectedMenuItem();
-
-            int item = (int)combo;
             bool isCombo = false;
 
-            if (IsSafeCombo(combo) && (curSafeComboIdx < 3))
+            if (IsSafeCombo(num))
             {
                 isCombo = true; //check if found combo
 
-                selectedNumber.Add(item);
-                log.Text += "\nSafe "+ (activeItemIndex+1) + ": You CRACKED combo " + (curSafeComboIdx+1) + " = " + item;
+                selectedNumber.Add(num);
+                log.Text += "\nSafe "+ (activeItemIndex+1) + ": You CRACKED combo " + (curComboIndex + 1) + " = " + num;
 
                 // increment current safe combo index
-                curSafeComboIdx++;
+                curComboIndex++;
 
                 // Check if selected safe is unlocked after input
-                if (curSafeComboIdx == 3)
+                if (curComboIndex == 3)
                 {
                     // All safe combo correctly inputted
                     // Open the safe...
@@ -259,7 +250,7 @@ namespace SDKTemplate
                 }
                 else
                 {
-                    log.Text += "\n Keep going..." + (3 - curSafeComboIdx) + " more to go.";
+                    log.Text += "\n Keep going..." + (3 - curComboIndex) + " more to go.";
                 }
             }
             else
@@ -301,10 +292,40 @@ namespace SDKTemplate
 
         private void Controller_RotationChanged(RadialController sender, RadialControllerRotationChangedEventArgs args)
         {
-            //log.Text += "\nRotation Changed Delta = " + args.RotationDeltaInDegrees;
-            //LogContactInfo(args.Contact);
+            // log.Text += "\nRotation Changed Delta = " + args.RotationDeltaInDegrees;
 
-            tempComboDialIdx = args.RotationDeltaInDegrees;
+			// Convert Delta to Absolute rotation
+			curRotationAngle += args.RotationDeltaInDegrees;
+
+			// Normalize to 0 - 359 degrees
+			if (curRotationAngle < 0) { curRotationAngle += 360; }
+			if (curRotationAngle > 359) { curRotationAngle -= 360; }
+
+			// Rotate graphic to match absolute rotation angle
+			ComboImageRotation.Angle = curRotationAngle;
+
+			// Convert rotation to actual combo
+			int curCombo = (int)Math.Round((360 - curRotationAngle) / DEGREES_PER_COMBO, 0) * COMBOS_MULTIPLIER;
+
+			// Did the combo change?
+			if (curCombo != lastCombo)
+			{
+				// Update
+				lastCombo = curCombo;
+				Debug.WriteLine("Current Combo: {0}", curCombo);
+
+				// Check
+				if (!UnlockedToggle.IsOn)
+				{
+					if (CheckSafeCombo(curCombo))
+					{
+						SendHapticFeedback(args.SimpleHapticsController, 1.0, TimeSpan.MaxValue);
+					}
+				}
+			}
+
+			/*
+			tempComboDialIdx = args.RotationDeltaInDegrees;
             prevComboDialIdx = curComboDialIdx;
             curComboDialIdx += tempComboDialIdx*3.6; // Calibrate Dial controller for SafeCracker
 
@@ -326,7 +347,8 @@ namespace SDKTemplate
             }
 
             // rotate combo animation
-            Rotate_Combo(prevComboDialIdx, curComboDialIdx);
+            // Rotate_Combo(prevComboDialIdx, curComboDialIdx);
+
             
             // Validate combo if safe is locked
             ToggleSwitch toggle = toggles[activeItemIndex];
@@ -338,8 +360,9 @@ namespace SDKTemplate
                 {
                     SendHapticFeedback(args.SimpleHapticsController,1.0, TimeSpan.MaxValue);
                 }                
-            }             
-        }
+            } 
+			*/
+		}
 
         private void SendHapticFeedback(SimpleHapticsController hapticController, Double intensity, TimeSpan duration)
         {
@@ -365,7 +388,7 @@ namespace SDKTemplate
             }
         }
 
-        private void Toggle0_Toggled(object sender, RoutedEventArgs e)
+        private void UnlockedToggle_Toggled(object sender, RoutedEventArgs e)
         {
             ToggleSwitch toggle = toggles[activeItemIndex];
             if (!toggle.IsOn)
@@ -375,13 +398,7 @@ namespace SDKTemplate
                 InitializeApp();
 
                 // Initialize combination index
-                curSafeComboIdx = 0;
-
-                // Initialize combo dial position back to zero
-                curSafeCombo = 0;  // init combination to zero
-                curComboDialIdx = 0; // init dial FROM pos to zero
-                prevComboDialIdx = 0; // init dial TO pos to zero
-                Rotate_Combo(prevComboDialIdx, curComboDialIdx); // rotate dial to zero pos
+                curComboIndex = 0;
             }
         }
 
@@ -399,7 +416,7 @@ namespace SDKTemplate
 
         }
 
-        private void spinme_PointerPressed(object sender, PointerRoutedEventArgs e)
+        private void ComboImage_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             // testing automation when safe combo dial is clicked
             
@@ -408,7 +425,7 @@ namespace SDKTemplate
             animation.To = 100; // curComboDialIdx;
             animation.BeginTime = TimeSpan.FromSeconds(1);
             //animation.RepeatBehavior = RepeatBehavior.Forever;
-            Storyboard.SetTarget(animation, spinme);
+            Storyboard.SetTarget(animation, ComboImage);
             Storyboard.SetTargetProperty(animation, "(UIElement.RenderTransform).(RotateTransform.Angle)" );
             //spinrect.Stop();           
             //spinrect.Children.Clear();
@@ -420,64 +437,13 @@ namespace SDKTemplate
             
         }
 
-        private void rotation_Completed(object sender, object e)
-        {
-            //log.Text += "\nSafe " + (activeItemIndex + 1) + ": Selected combo " + (curSafeCombo);
-
-            // Validate combo if safe is locked
-            ToggleSwitch toggle = toggles[activeItemIndex];
-
-            if (!toggle.IsOn)
-            {
-                CheckSafeCombo(curSafeCombo);
-            }            
-        }
-
-        private void Rotate_Combo(double f, double t)
-        {
-            log.Text += "\nSafe " + (activeItemIndex + 1) + ": at combo = " + (curSafeCombo);
-
-            ((this.Resources["spincombo"] as Storyboard).Children[0] as DoubleAnimation).To = t;
-            (this.Resources["spincombo"] as Storyboard).Begin();
-
-            (this.Resources["spincombo"] as Storyboard).Completed += rotation_Completed;
-
-        }
-        void button_Click(object sender, RoutedEventArgs e)
-        {
-
-            Storyboard storyboard = new Storyboard();
-            storyboard = ((Storyboard)Resources["Storyboard2"]);
-            DoubleAnimation animation = new DoubleAnimation();
-            animation.From = prevComboDialIdx;  //curComboDialIdx;
-            animation.To = curComboDialIdx;
-            animation.BeginTime = TimeSpan.FromSeconds(1);
-            //animation.RepeatBehavior = RepeatBehavior.Forever;
-            Storyboard.SetTarget(animation, spinme);
-            Storyboard.SetTargetProperty(animation, "(UIElement.RenderTransform).(RotateTransform.Angle)");
-            //Storyboard.SetTargetProperty(animation, "(UIElement.Projection).(PlaneProjection.Rotation" + "Y" + ")");
-            //spinrect.Stop();
-            storyboard.Children.Clear();
-            storyboard.Children.Add(animation);
-            //storyboard.Begin();
-
-            //storyboard.Completed += storyBoard_Completed;
-            //spinrect.Begin();
-        }
-
-        private void storyBoard_Completed(object sender, EventArgs e)
-        {
-            // 150 -- this is final width from the storyboard (see 1.)
-            //animatedControl.Width = 150;
-        }
-
         private void RemoveItem(object sender, RoutedEventArgs e)
         {
             RadialControllerMenuItem radialControllerMenuItem = GetRadialControllerMenuItemFromSender(sender);
 
-            if (Controller.Menu.Items.Contains(radialControllerMenuItem))
+            if (controller.Menu.Items.Contains(radialControllerMenuItem))
             {
-                Controller.Menu.Items.Remove(radialControllerMenuItem);
+                controller.Menu.Items.Remove(radialControllerMenuItem);
             }
         }
 
@@ -485,16 +451,16 @@ namespace SDKTemplate
         {
             RadialControllerMenuItem radialControllerMenuItem = GetRadialControllerMenuItemFromSender(sender);
 
-            if (Controller.Menu.Items.Contains(radialControllerMenuItem))
+            if (controller.Menu.Items.Contains(radialControllerMenuItem))
             {
-                Controller.Menu.SelectMenuItem(radialControllerMenuItem);
+                controller.Menu.SelectMenuItem(radialControllerMenuItem);
                 //PrintSelectedItem();
             }
         }
 
         private void SelectPreviouslySelectedItem(object sender, RoutedEventArgs e)
         {
-            if (Controller.Menu.TrySelectPreviouslySelectedMenuItem())
+            if (controller.Menu.TrySelectPreviouslySelectedMenuItem())
             {
                 //PrintSelectedItem();
             }
@@ -528,7 +494,7 @@ namespace SDKTemplate
 
         private string GetSelectedMenuItemName()
         {
-            RadialControllerMenuItem selectedMenuItem = Controller.Menu.GetSelectedMenuItem();
+            RadialControllerMenuItem selectedMenuItem = controller.Menu.GetSelectedMenuItem();
 
             if (selectedMenuItem == menuItems[activeItemIndex])
             {

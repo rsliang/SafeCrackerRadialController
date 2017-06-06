@@ -15486,14 +15486,14 @@
     "UAP,Version=v10.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Richard\\.nuget\\packages\\": {}
+    "C:\\Users\\jbienz\\.nuget\\packages\\": {}
   },
   "project": {
     "restore": {
-      "projectUniqueName": "C:\\projects\\RadialController-master\\Samples\\RadialControllerSafeCracker\\cs\\RadialController.csproj",
+      "projectUniqueName": "C:\\Users\\jbienz\\Code\\RSLiang\\SafeCrackerRadialController\\Samples\\RadialControllerSafeCracker\\cs\\RadialController.csproj",
       "projectName": "RadialController",
-      "projectPath": "C:\\projects\\RadialController-master\\Samples\\RadialControllerSafeCracker\\cs\\RadialController.csproj",
-      "projectJsonPath": "C:\\projects\\RadialController-master\\Samples\\RadialControllerSafeCracker\\cs\\project.json",
+      "projectPath": "C:\\Users\\jbienz\\Code\\RSLiang\\SafeCrackerRadialController\\Samples\\RadialControllerSafeCracker\\cs\\RadialController.csproj",
+      "projectJsonPath": "C:\\Users\\jbienz\\Code\\RSLiang\\SafeCrackerRadialController\\Samples\\RadialControllerSafeCracker\\cs\\project.json",
       "projectStyle": "ProjectJson"
     },
     "dependencies": {
