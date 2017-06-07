@@ -22,11 +22,11 @@ Specifically, this sample shows how to:
 - **Control haptic feedback:** This sample demonstrates how to enable and disable the haptic feedback for custom items.
 - **Configure default system items:** This sample demonstrates how to add, remove, and select the default system items.
 
-**Note** The Windows universal samples require Visual Studio 2015 to build and Windows 10 to execute.
+**Note** The Windows universal samples require Visual Studio 2017 to build and Windows 10 to execute.
 
 To obtain information about Windows 10 development, go to the [Windows Dev Center](http://go.microsoft.com/fwlink/?LinkID=532421)
 
-To obtain information about Microsoft Visual Studio 2015 and the tools for developing Windows apps, go to [Visual Studio 2015](http://go.microsoft.com/fwlink/?LinkID=532422)
+To obtain information about Microsoft Visual Studio 2017 and the tools for developing Windows apps, go to [Visual Studio 2017](http://go.microsoft.com/fwlink/?LinkID=532422)
 
 ## Related topics
 
