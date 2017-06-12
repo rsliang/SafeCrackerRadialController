@@ -72,7 +72,7 @@
                     </StackPanel.Background>
 
                     <Image Stretch="Uniform" x:Name="ComboImage" Source="Assets/combo.png" RenderTransformOrigin="0.5,0.5"
-                                  PointerPressed="ComboImage_PointerPressed" Height="225" Width="225" Margin="50,100,122,0">
+                                  Height="225" Width="225" Margin="50,100,122,0">
                         <Image.RenderTransform>
                             <RotateTransform x:Name="ComboImageRotation"/>
                         </Image.RenderTransform>
