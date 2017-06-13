@@ -43,6 +43,15 @@ namespace SDKTemplate
     /// </summary>
     public sealed partial class MainPage : Page
     {
+		#region Nested Types
+		private enum TurnDirection
+		{
+			Any,
+			Clockwise,
+			CounterClockwise
+		}
+		#endregion // Nested Types
+
 		#region Constants
 		private const double DEGREES_PER_COMBO = 18;	// Every 18 degrees is a possible combo (total of 20 possible combinations)
 		private const int COMBOS_MULTIPLIER = 5;		// Multiply each combo by 5 to get possible combintions between 0 and 100
@@ -59,6 +68,7 @@ namespace SDKTemplate
 		private int curComboIndex;
 		private List<RadialControllerMenuItem> customMenuItems;
 		private int lastCombo = -1;
+		private TurnDirection nextTurnDirection;
 		private MainPage rootPage;
 		private RadialControllerMenuItem safeMenuItem; // SafeCracker custom tool menu
 		private List<int> safeCombo;
@@ -86,8 +96,10 @@ namespace SDKTemplate
             // Preset safe combo
             safeCombo = new List<int> { 30, 60, 90 };
 
-            // Initialize combination index
+            // Initialize combination lock
             curComboIndex = 0;
+			lastCombo = -1;
+			nextTurnDirection = TurnDirection.Any;
         }
 
         private void InitializeController()
@@ -109,11 +121,11 @@ namespace SDKTemplate
 
         private void AddAllItems()
         {
-			AddSystemItems();
 			AddCustomItems();
+			AddSystemItems();
 		}
 
-        private void AddSystemItems()
+		private void AddSystemItems()
         {
             //Remove Volume/Scroll/Zoom/Undo tools not needed by SafeCracker app
             config = RadialControllerConfiguration.GetForCurrentView();
@@ -178,7 +190,7 @@ namespace SDKTemplate
             {
                 isCombo = true; //check if found combo
 
-                log.Text += "You CRACKED combo " + (curComboIndex + 1) + " = " + num;
+                log.Text += "\nYou CRACKED combo " + (curComboIndex + 1) + " = " + num;
 
                 // increment current safe combo index
                 curComboIndex++;
@@ -234,7 +246,7 @@ namespace SDKTemplate
 
         private void Controller_RotationChanged(RadialController sender, RadialControllerRotationChangedEventArgs args)
         {
-            // log.Text += "\nRotation Changed Delta = " + args.RotationDeltaInDegrees;
+			// log.Text += "\nRotation Changed Delta = " + args.RotationDeltaInDegrees;
 
 			// Convert Delta to Absolute rotation
 			curRotationAngle += args.RotationDeltaInDegrees;
@@ -246,26 +258,42 @@ namespace SDKTemplate
 			// Rotate graphic to match absolute rotation angle
 			ComboImageRotation.Angle = curRotationAngle;
 
+			// If the lock is already unlocked, we can skip the rest of this code
+			if (UnlockedToggle.IsOn) { return; }
+
 			// Convert rotation to actual combo
 			int curCombo = (int)Math.Round((360 - curRotationAngle) / DEGREES_PER_COMBO, 0) * COMBOS_MULTIPLIER;
 
-			// Did the combo change?
-			if (curCombo != lastCombo)
-			{
-				// Update
-				lastCombo = curCombo;
-				Debug.WriteLine("Current Combo: {0}", curCombo);
+			// If the current combo is the same as the last combo, the dial moved but no real change. We can skip further processing.
+			if (curCombo == lastCombo) { return; }
 
-				// If safe is not already unlocked
-				if (!UnlockedToggle.IsOn)
+			// Okay, the combo changed. Store the new combo as the last combo for future reference.
+			lastCombo = curCombo;
+			Debug.WriteLine("Current Combo: {0}", curCombo);
+
+			// Now, which direction did the user rotate?
+			TurnDirection turnDirection = (args.RotationDeltaInDegrees > 0 ? TurnDirection.Clockwise : TurnDirection.CounterClockwise);
+
+			// Did the user NEED to rotate any particular way?
+			if (nextTurnDirection != TurnDirection.Any)
+			{
+				// Did they turn as expected?
+				if (turnDirection != nextTurnDirection)
 				{
-					// Check to see if the user found a match
-					if (CheckSafeCombo(curCombo))
-					{
-						// If so, vibrate the dial
-						SendHapticFeedback(args.SimpleHapticsController, 1.0, TimeSpan.MaxValue);
-					}
+					log.Text += "\n\nUser didn't change directions\nor changed directions unexpectedly.\nCombo reset!!\n";
+					InitializeApp();
+					return;
 				}
+			}
+
+			// Check to see if the user found a match
+			if (CheckSafeCombo(curCombo))
+			{
+				// They did! Vibrate the dial
+				SendHapticFeedback(args.SimpleHapticsController, 1.0, TimeSpan.MaxValue);
+
+				// Now that the user has found a combo, they must change directions on the next turn
+				nextTurnDirection = (turnDirection == TurnDirection.Clockwise ? TurnDirection.CounterClockwise : TurnDirection.Clockwise);
 			}
 		}
 
