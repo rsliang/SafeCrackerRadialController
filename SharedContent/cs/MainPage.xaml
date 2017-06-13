@@ -58,10 +58,10 @@
 
                 <TextBlock Text="Instruction:" Style="{StaticResource SampleHeaderTextStyle}"/>
                 <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
-                    Turn Dial and stop on sequence of 3 pre-set safe combo numbers.
+                    Turn Dial and stop on sequence of 3 pre-set safe combo numbers. Change directions after each combo.
                 </TextBlock>
                 <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
-                    Tip: You will feel a haptic feedback when Dial rotates over the next safe combo sequence.
+                    Tip: You will feel a haptic feedback when Dial rotates over the next combo in the sequence.
                 </TextBlock>
             </StackPanel>
             
